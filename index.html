@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LASQ Tactical Terminal</title>
+    <style>
+        body { background-color: #0a0a0a; color: #00ff41; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .terminal { border: 2px solid #00ff41; padding: 20px; width: 90%; max-width: 450px; box-shadow: 0 0 15px #00ff41; }
+        h1 { text-align: center; font-size: 1.2rem; text-transform: uppercase; border-bottom: 1px solid #00ff41; padding-bottom: 10px; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.7rem; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; background: #000; border: 1px solid #00ff41; color: #00ff41; box-sizing: border-box; outline: none; }
+        button { width: 100%; padding: 15px; background: #00ff41; border: none; color: #000; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+        button:hover { background: #008f11; }
+        #status-box { margin-top: 20px; padding: 10px; border: 1px solid #00ff41; text-align: center; font-size: 0.8rem; min-height: 20px; text-transform: uppercase; }
+        .red { color: #ff0000; border-color: #ff0000 !important; }
+        .green { color: #00ff41; }
+    </style>
+</head>
+<body>
+
+<div class="terminal">
+    <h1>LASQ Terminal v1.0</h1>
+    
+    <div class="form-group">
+        <label>Quest ID</label>
+        <input type="text" id="questId" value="LISBON-2026">
+    </div>
+
+    <div class="form-group">
+        <label>Expense Amount ($)</label>
+        <input type="number" id="amount" placeholder="0.00">
+    </div>
+
+    <div class="form-group">
+        <label>Category</label>
+        <select id="category">
+            <option value="Transport">Transport</option>
+            <option value="Food">Food</option>
+            <option value="Lodging">Lodging</option>
+            <option value="Supplies">Supplies</option>
+        </select>
+    </div>
+
+    <button onclick="submitToLedger()">Execute Submission</button>
+
+    <div id="status-box">Terminal Ready</div>
+</div>
+
+<script>
+    // Your verified Google Bridge URL
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbx_z6vzUkHOTRHSJ13LmbVGV4rabbTyj2p0CJ7B0Pf6eFgaIhzP0ghBFX3RKP6Grr0k0A/exec';
+
+    async function submitToLedger() {
+        const statusBox = document.getElementById('status-box');
+        const amt = document.getElementById('amount').value;
+        
+        if(!amt) { alert("Enter amount"); return; }
+
+        statusBox.innerText = "Transmitting to Ledger...";
+        statusBox.className = "";
+
+        const payload = {
+            questId: document.getElementById('questId').value,
+            amount: amt,
+            category: document.getElementById('category').value,
+            notes: "Mobile Terminal Entry"
+        };
+
+        try {
+            await fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            // Feedback Logic
+            if (parseFloat(amt) > 100) {
+                statusBox.innerText = "Status: Variance Detected (>100)";
+                statusBox.classList.add('red');
+            } else {
+                statusBox.innerText = "Status: Mission Validated";
+                statusBox.classList.add('green');
+            }
+            
+            document.getElementById('amount').value = "";
+        } catch (error) {
+            statusBox.innerText = "Status: Connection Error";
+            statusBox.classList.add('red');
+        }
+    }
+</script>
+
+</body>
+</html>
